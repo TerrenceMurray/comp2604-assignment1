@@ -51,8 +51,9 @@ int main () {
     
     int even = 0, odd = 0, multiple10 = 0;
 
-    int buffer;
+    int buffer, process_line = 1;
     while (read(fds[0], &buffer, sizeof(buffer)) > 0) {
+        printf("PID: %d\n", buffer);
         if (buffer % 2 == 0)
             even++;
         else 
@@ -64,8 +65,20 @@ int main () {
 
     close(fds[0]); // close read end of pipe when done
 
+    // classify parent process
+    pid_t pid = getpid();
+
+    printf("PID: %d\n", pid);
+    if (pid % 2 == 0)
+            even++;
+        else 
+            odd++;
+
+        if (pid % 10 == 0)
+            multiple10++;
+
     if (odd > 0 && even > 0 && multiple10 > 0)
-        printf("Even PIDs: %d\nOdd PIDs: %d\nMultiples of 10 PIDs: %d\n", even, odd, multiple10);
+        printf("\nEven PIDs: %d\nOdd PIDs: %d\nMultiples of 10 PIDs: %d\n", even, odd, multiple10);
 
     return 0;
 }
