@@ -21,9 +21,6 @@ void create_processes(int depth, int fds[]) {
 
         int id = getpid();
         write(fds[1], &id, sizeof(id));
-
-        // close(fds[1]); // close the write end of pipe after writing
-        // _exit(0);      // ensure child process exits immediately after writing
     }
 
     // parent continues to fork
@@ -77,6 +74,7 @@ int main () {
         if (pid % 10 == 0)
             multiple10++;
 
+    // Output the results
     if (odd > 0 && even > 0 && multiple10 > 0)
         printf("\nEven PIDs: %d\nOdd PIDs: %d\nMultiples of 10 PIDs: %d\n", even, odd, multiple10);
 
