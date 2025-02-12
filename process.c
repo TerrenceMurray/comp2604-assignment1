@@ -1,46 +1,136 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
+// #include <stdio.h>
+// #include <fcntl.h>
+// #include <unistd.h>
+// #include <stdlib.h>
 
-void repeat_fork(int aggregates[], int iteration) {
-    if (iteration == 0)
+// void create_processes(int depth, int fds[]) {
+//     // base case
+//     if (depth == 0)
+//         return;
+
+//     pid_t pid = fork();
+
+//     if (pid == -1) {
+//         perror("fork() failed. \n");
+//         exit(1);
+//     }
+
+//     if (pid == 0) {
+//         // child process
+//         close(fds[0]); // close the read end of pipe
+
+//         int id = getpid();
+//         write(fds[1], &id, sizeof(id));
+//     }
+    
+//     create_processes(depth - 1, fds);
+// }
+
+// int main () {
+//     int fds[2];
+
+//     // create pipe
+//     if (pipe(fds) == -1) {
+//         perror("pipe() failed. \n");
+//         exit(1);
+//     }
+
+//     // create processes
+//     create_processes(9, fds);
+
+//     close(fds[1]); // close the write end of pipe
+
+//     int even = 0, odd = 0, multiple10 = 0;
+
+//     // parent process
+//     int buffer;
+//     while (read(fds[0], &buffer, sizeof(buffer)) > 0) {
+//         // printf("Child PID: %d \n", buffer);
+
+//         if (buffer % 2 == 0)
+//             even++;
+//         else 
+//             odd++;
+
+//         if (buffer % 10 == 0)
+//             multiple10++;
+//     }
+
+//     close(fds[0]); // close read end of pipe when done
+
+//     printf("Even PIDs: %d\nOdd PIDs: %d\nMultiples of 10 PIDs: %d\n", even, odd, multiple10);
+
+//     return 0;
+// }
+
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+void create_processes(int depth, int fds[]) {
+    // base case
+    if (depth == 0)
         return;
 
-    pid_t pid = fork(); 
+    pid_t pid = fork();
 
-    if (pid != 0)
-    {
-        printf("This is a child process with id %d\n", pid);
+    if (pid == -1) {
+        perror("fork() failed. \n");
+        exit(1);
+    }
 
-        // even
-        if (pid % 2 == 0) 
-            aggregates[0] = aggregates[0] + 1;
-        // odd
-        else
-            aggregates[1] = aggregates[1] + 1;
-        
-        // multiple of 10
-        if (pid % 10 == 0)
-            aggregates[2] = aggregates[2] + 1;
+    if (pid == 0) {
+        // child process
+        close(fds[0]); // close the read end of pipe
 
-        wait(NULL);
-    } 
+        int id = getpid();
+        write(fds[1], &id, sizeof(id));
 
-    repeat_fork(aggregates, iteration - 1);
+        // close(fds[1]); // close the write end of pipe after writing
+        // _exit(0);      // ensure child process exits immediately after writing
+    }
+
+    // parent continues to fork
+    create_processes(depth - 1, fds);
+
+    wait(NULL);
 }
 
 int main () {
-    int aggregates[] = {0, 0, 0}; // even_pids, odd_pids, multiples_of_10
+    int fds[2];
 
-    repeat_fork(aggregates, 9);
+    // create pipe
+    if (pipe(fds) == -1) {
+        perror("pipe() failed. \n");
+        exit(1);
+    }
 
-    printf(
-        "Total processes: %d\nTotal even pids: %d\nTotal odd pids: %d\n",
-        aggregates[0] + aggregates[1],
-        aggregates[0],
-        aggregates[1]
-    );
+    // create processes
+    create_processes(9, fds);
+
+    close(fds[1]); // close the write end of pipe in the parent
+
+    
+    // parent process reads PIDs from the pipe
+    
+    int even = 0, odd = 0, multiple10 = 0;
+
+    int buffer;
+    while (read(fds[0], &buffer, sizeof(buffer)) > 0) {
+        if (buffer % 2 == 0)
+            even++;
+        else 
+            odd++;
+
+        if (buffer % 10 == 0)
+            multiple10++;
+    }
+
+    close(fds[0]); // close read end of pipe when done
+    
+    if (odd > 0 && even > 0 && multiple10 > 0)
+        printf("Even PIDs: %d\nOdd PIDs: %d\nMultiples of 10 PIDs: %d\n", even, odd, multiple10);
 
     return 0;
 }
