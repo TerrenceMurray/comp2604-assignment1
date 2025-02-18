@@ -1,0 +1,8 @@
+1. Blocked -> Running
+If a high-priority process is waiting on an event, the OS may allow
+the process to transition directly to the Running state.
+
+2. Ready -> Blocked
+Although a process does not ordinarily transition from a Ready to Blocked state directly, 
+in some cases such as if a resource which the process requires becomes
+unavailable.
